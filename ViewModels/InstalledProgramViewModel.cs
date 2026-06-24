@@ -43,4 +43,10 @@ public sealed class InstalledProgramViewModel
     public string Recommendation { get; init; } = "Unknown";
 
     public string RecommendationReasons { get; init; } = string.Empty;
+
+    public string LlmExplanation { get; init; } = string.Empty;
+
+    public string CategoryLabel { get; init; } = "Application";
+
+    public string RiskFlagsLabel { get; init; } = string.Empty;
 }

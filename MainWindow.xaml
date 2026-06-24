@@ -5,246 +5,104 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         Title="Windows Usage Cleanup Assistant"
-        Height="760"
-        Width="1320"
-        MinHeight="620"
-        MinWidth="1040">
-    <Grid Margin="16">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
+        Height="860"
+        Width="1480"
+        MinHeight="720"
+        MinWidth="1180"
+        Background="{StaticResource ShellBackgroundBrush}">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="260" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
 
-        <StackPanel Grid.Row="0" Margin="0,0,0,12">
-            <TextBlock FontSize="24" FontWeight="SemiBold" Text="Windows Usage Cleanup Assistant" />
-            <TextBlock Margin="0,4,0,0"
-                       Foreground="#555555"
-                       Text="Read-only inventory and usage observation. No uninstall action is performed." />
-        </StackPanel>
+        <Border Background="{StaticResource NavigationBrush}"
+                Padding="18">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Top" Margin="0,0,0,18">
+                    <TextBlock FontSize="26"
+                               FontWeight="Bold"
+                               Foreground="White"
+                               Text="Cleanup Assistant" />
+                    <TextBlock Margin="0,8,0,0"
+                               Foreground="#C8D7D9"
+                               Text="Windows usage, risk, and reclaim insights" 
+                               TextWrapping="Wrap" />
+                </StackPanel>
 
-        <TabControl Grid.Row="1">
-            <TabItem Header="Installed Programs">
-                <Grid Margin="0,12,0,0">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
-                        <RowDefinition Height="Auto" />
-                    </Grid.RowDefinitions>
+                <ListBox ItemsSource="{Binding NavigationItems}"
+                         SelectedItem="{Binding SelectedNavigationItem}"
+                         Background="Transparent"
+                         BorderThickness="0"
+                         Foreground="White"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                    <ListBox.ItemContainerStyle>
+                        <Style TargetType="ListBoxItem">
+                            <Setter Property="Margin" Value="0,0,0,10" />
+                            <Setter Property="Padding" Value="0" />
+                            <Setter Property="Background" Value="Transparent" />
+                            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="ListBoxItem">
+                                        <Border x:Name="ItemBorder"
+                                                Background="Transparent"
+                                                CornerRadius="18"
+                                                Padding="14,12">
+                                            <ContentPresenter />
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsSelected" Value="True">
+                                                <Setter TargetName="ItemBorder" Property="Background" Value="#245C60" />
+                                            </Trigger>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="ItemBorder" Property="Background" Value="#1C4C50" />
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </ListBox.ItemContainerStyle>
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel>
+                                <TextBlock FontSize="16"
+                                           FontWeight="SemiBold"
+                                           Foreground="White"
+                                           Text="{Binding Title}" />
+                                <TextBlock Margin="0,4,0,0"
+                                           Foreground="#C8D7D9"
+                                           Text="{Binding Subtitle}" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </DockPanel>
+        </Border>
 
-                    <Grid Grid.Row="0" Margin="0,0,0,12">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
+        <Grid Grid.Column="1" Margin="24">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
 
-                        <TextBox Grid.Column="0"
-                                 Height="34"
-                                 Margin="0,0,12,0"
-                                 VerticalContentAlignment="Center"
-                                 Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" />
+            <Border Style="{StaticResource PageCardStyle}" Margin="0,0,0,20">
+                <StackPanel>
+                    <TextBlock FontSize="32"
+                               FontWeight="Bold"
+                               Foreground="#193237"
+                               Text="{Binding CurrentSectionTitle}" />
+                    <TextBlock Margin="0,8,0,0"
+                               Foreground="#6B7B84"
+                               Text="{Binding CurrentSectionSubtitle}" />
+                </StackPanel>
+            </Border>
 
-                        <Button Grid.Column="1"
-                                Width="110"
-                                Height="34"
-                                Command="{Binding RefreshCommand}"
-                                Content="Refresh" />
-                    </Grid>
-
-                    <DataGrid Grid.Row="1"
-                              AutoGenerateColumns="False"
-                              CanUserAddRows="False"
-                              CanUserDeleteRows="False"
-                              IsReadOnly="True"
-                              ItemsSource="{Binding ProgramsView}"
-                              SelectionMode="Single"
-                              HeadersVisibility="Column"
-                              GridLinesVisibility="Horizontal"
-                              RowHeaderWidth="0">
-                        <DataGrid.Columns>
-                            <DataGridTextColumn Width="1.6*" Binding="{Binding DisplayName}" Header="Program Name" />
-                            <DataGridTextColumn Width="1.1*" Binding="{Binding Recommendation}" Header="Recommendation" />
-                            <DataGridTextColumn Width="0.8*" Binding="{Binding FinalCleanupScore}" Header="Cleanup Score" />
-                            <DataGridTextColumn Width="1.1*" Binding="{Binding LastUsedUtc, StringFormat={}{0:yyyy-MM-dd}}" Header="Last Used (UTC)" />
-                            <DataGridTextColumn Width="0.8*" Binding="{Binding EstimatedSizeMB}" Header="Size (MB)" />
-                            <DataGridTextColumn Width="1.2*" Binding="{Binding MatchedProcessName}" Header="Matched Process" />
-                            <DataGridTextColumn Width="0.7*" Binding="{Binding MatchConfidence}" Header="Match" />
-                            <DataGridTextColumn Width="1.2*" Binding="{Binding Publisher}" Header="Publisher" />
-                            <DataGridTextColumn Width="2.4*" Binding="{Binding RecommendationReasons}" Header="Reasons" />
-                        </DataGrid.Columns>
-                    </DataGrid>
-
-                    <TextBlock Grid.Row="2"
-                               Margin="0,12,0,0"
-                               Foreground="#555555"
-                               Text="{Binding InventoryStatusText}" />
-                </Grid>
-            </TabItem>
-
-            <TabItem Header="Usage">
-                <Grid Margin="0,12,0,0">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
-                        <RowDefinition Height="Auto" />
-                    </Grid.RowDefinitions>
-
-                    <DockPanel Grid.Row="0" Margin="0,0,0,12">
-                        <TextBlock VerticalAlignment="Center"
-                                   Foreground="#555555"
-                                   Text="Running processes are sampled every 30 seconds and stored in SQLite." />
-                        <Button DockPanel.Dock="Right"
-                                Width="110"
-                                Height="34"
-                                Command="{Binding RefreshUsageCommand}"
-                                Content="Refresh" />
-                    </DockPanel>
-
-                    <DataGrid Grid.Row="1"
-                              AutoGenerateColumns="False"
-                              CanUserAddRows="False"
-                              CanUserDeleteRows="False"
-                              IsReadOnly="True"
-                              ItemsSource="{Binding UsageView}"
-                              SelectionMode="Single"
-                              HeadersVisibility="Column"
-                              GridLinesVisibility="Horizontal"
-                              RowHeaderWidth="0">
-                        <DataGrid.Columns>
-                            <DataGridTextColumn Width="1.1*" Binding="{Binding ProcessName}" Header="Process" />
-                            <DataGridTextColumn Width="2.4*" Binding="{Binding ExecutablePath}" Header="Executable Path" />
-                            <DataGridTextColumn Width="1*" Binding="{Binding FirstSeenUtc, StringFormat={}{0:yyyy-MM-dd HH:mm:ss}}" Header="First Seen (UTC)" />
-                            <DataGridTextColumn Width="1*" Binding="{Binding LastSeenUtc, StringFormat={}{0:yyyy-MM-dd HH:mm:ss}}" Header="Last Seen (UTC)" />
-                            <DataGridTextColumn Width="0.9*" Binding="{Binding TotalObservedMinutes, StringFormat={}{0:N1}}" Header="Observed Minutes" />
-                            <DataGridTextColumn Width="0.8*" Binding="{Binding LaunchCount}" Header="Launch Count" />
-                        </DataGrid.Columns>
-                    </DataGrid>
-
-                    <TextBlock Grid.Row="2"
-                               Margin="0,12,0,0"
-                               Foreground="#555555"
-                               Text="{Binding UsageStatusText}" />
-                </Grid>
-            </TabItem>
-
-            <TabItem Header="Disk Cleanup">
-                <Grid Margin="0,12,0,0">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
-                        <RowDefinition Height="Auto" />
-                    </Grid.RowDefinitions>
-
-                    <StackPanel Grid.Row="0" Margin="0,0,0,12">
-                        <WrapPanel>
-                            <Button Width="150"
-                                    Height="34"
-                                    Margin="0,0,12,8"
-                                    Command="{Binding ScanCleanupCommand}"
-                                    Content="Scan Cleanable Files" />
-                            <Button Width="110"
-                                    Height="34"
-                                    Margin="0,0,12,8"
-                                    Command="{Binding PreviewCleanupCommand}"
-                                    Content="Preview" />
-                            <Button Width="110"
-                                    Height="34"
-                                    Margin="0,0,12,8"
-                                    Command="{Binding CleanSelectedCommand}"
-                                    Content="Clean Selected" />
-                            <Button Width="130"
-                                    Height="34"
-                                    Margin="0,0,12,8"
-                                    Command="{Binding GenerateCleanupReportCommand}"
-                                    Content="Generate Report" />
-                        </WrapPanel>
-
-                        <TextBlock Foreground="#555555"
-                                   Text="Scope is limited to User Temp, Windows Temp, Recycle Bin, and Windows thumbnail cache. Downloads, Documents, Desktop, Program Files, Windows system files, and project folders are excluded." />
-                    </StackPanel>
-
-                    <DataGrid Grid.Row="1"
-                              AutoGenerateColumns="False"
-                              CanUserAddRows="False"
-                              CanUserDeleteRows="False"
-                              IsReadOnly="False"
-                              ItemsSource="{Binding CleanupView}"
-                              SelectionMode="Single"
-                              HeadersVisibility="Column"
-                              GridLinesVisibility="Horizontal"
-                              RowHeaderWidth="0">
-                        <DataGrid.Columns>
-                            <DataGridCheckBoxColumn Width="0.6*" Binding="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}" Header="Select" />
-                            <DataGridTextColumn Width="1.3*" Binding="{Binding CategoryName}" Header="Category" IsReadOnly="True" />
-                            <DataGridTextColumn Width="0.8*" Binding="{Binding FileCount}" Header="Files" IsReadOnly="True" />
-                            <DataGridTextColumn Width="0.9*" Binding="{Binding TotalSizeMB, StringFormat={}{0:N1}}" Header="Size (MB)" IsReadOnly="True" />
-                            <DataGridTextColumn Width="0.8*" Binding="{Binding RiskLevel}" Header="Risk" IsReadOnly="True" />
-                            <DataGridTextColumn Width="2.5*" Binding="{Binding Description}" Header="Description" IsReadOnly="True" />
-                        </DataGrid.Columns>
-                    </DataGrid>
-
-                    <TextBlock Grid.Row="2"
-                               Margin="0,12,0,0"
-                               Foreground="#555555"
-                               Text="{Binding CleanupStatusText}" />
-                </Grid>
-            </TabItem>
-
-            <TabItem Header="Reports">
-                <Grid Margin="0,12,0,0">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
-                        <RowDefinition Height="Auto" />
-                    </Grid.RowDefinitions>
-
-                    <TextBlock Grid.Row="0"
-                               Margin="0,0,0,12"
-                               Foreground="#555555"
-                               Text="Generate explainable exports from the current program inventory, usage history, recommendations, and disk cleanup preview." />
-
-                    <WrapPanel Grid.Row="1" Margin="0,0,0,12">
-                        <Button Width="130"
-                                Height="34"
-                                Margin="0,0,12,8"
-                                Command="{Binding ExportHtmlReportCommand}"
-                                Content="Export HTML" />
-                        <Button Width="130"
-                                Height="34"
-                                Margin="0,0,12,8"
-                                Command="{Binding ExportCsvReportCommand}"
-                                Content="Export CSV" />
-                        <Button Width="130"
-                                Height="34"
-                                Margin="0,0,12,8"
-                                Command="{Binding ExportJsonReportCommand}"
-                                Content="Export JSON" />
-                    </WrapPanel>
-
-                    <Border Grid.Row="2"
-                            Background="#FFFDF8"
-                            BorderBrush="#D9D2C7"
-                            BorderThickness="1"
-                            CornerRadius="18"
-                            Padding="18">
-                        <StackPanel>
-                            <TextBlock FontSize="22" FontWeight="SemiBold" Text="Included Sections" />
-                            <TextBlock Margin="0,12,0,0" Text="• Summary cards" />
-                            <TextBlock Margin="0,6,0,0" Text="• Installed program table" />
-                            <TextBlock Margin="0,6,0,0" Text="• Unused programs table" />
-                            <TextBlock Margin="0,6,0,0" Text="• Cleanup candidates table" />
-                            <TextBlock Margin="0,6,0,0" Text="• Dependency-sensitive programs table" />
-                            <TextBlock Margin="0,6,0,0" Text="• Disk cleanup preview" />
-                            <TextBlock Margin="0,6,0,0" Text="• Recommendation reasons" />
-                        </StackPanel>
-                    </Border>
-
-                    <TextBlock Grid.Row="3"
-                               Margin="0,12,0,0"
-                               Foreground="#555555"
-                               Text="{Binding ReportStatusText}" />
-                </Grid>
-            </TabItem>
-        </TabControl>
+            <Border Grid.Row="1"
+                    Style="{StaticResource PageCardStyle}">
+                <ContentControl Content="{Binding CurrentPage}" />
+            </Border>
+        </Grid>
     </Grid>
 </Window>

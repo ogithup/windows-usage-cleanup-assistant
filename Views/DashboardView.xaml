@@ -1,0 +1,109 @@
+<UserControl x:Class="WindowsUsageCleanupAssistant.Views.DashboardView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <UniformGrid Columns="4" Margin="0,0,0,20">
+            <Border Style="{StaticResource SummaryCardStyle}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource SummaryLabelStyle}" Text="Disk Status" />
+                    <TextBlock Style="{StaticResource SummaryValueStyle}" Text="{Binding DiskStatus}" TextWrapping="Wrap" />
+                </StackPanel>
+            </Border>
+            <Border Style="{StaticResource SummaryCardStyle}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource SummaryLabelStyle}" Text="Installed Programs" />
+                    <TextBlock Style="{StaticResource SummaryValueStyle}" Text="{Binding TotalProgramCount}" />
+                </StackPanel>
+            </Border>
+            <Border Style="{StaticResource SummaryCardStyle}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource SummaryLabelStyle}" Text="Unused 6+ Months" />
+                    <TextBlock Style="{StaticResource SummaryValueStyle}" Text="{Binding UnusedProgramCount}" />
+                </StackPanel>
+            </Border>
+            <Border Style="{StaticResource SummaryCardStyle}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource SummaryLabelStyle}" Text="Risky Dependencies" />
+                    <TextBlock Style="{StaticResource SummaryValueStyle}" Text="{Binding RiskyDependencyCount}" />
+                </StackPanel>
+            </Border>
+        </UniformGrid>
+
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1.3*" />
+                <ColumnDefinition Width="0.9*" />
+            </Grid.ColumnDefinitions>
+
+            <Border Grid.Column="0" Style="{StaticResource PageCardStyle}" Margin="0,0,20,0">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource SectionTitleStyle}" Text="Largest Installed Programs" />
+                    <ItemsControl ItemsSource="{Binding TopPrograms}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="0,10,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel>
+                                        <TextBlock FontWeight="SemiBold" Text="{Binding DisplayName}" />
+                                        <TextBlock Foreground="{DynamicResource MaterialDesignBodyLight}" Text="{Binding LlmExplanation}" TextWrapping="Wrap" />
+                                    </StackPanel>
+                                    <Border Grid.Column="1" Style="{StaticResource RecommendationBadgeBorderStyle}">
+                                        <TextBlock Style="{StaticResource RecommendationBadgeTextStyle}" Text="{Binding Recommendation}" />
+                                    </Border>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+
+            <StackPanel Grid.Column="1">
+                <Border Style="{StaticResource PageCardStyle}" Margin="0,0,0,20">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource SectionTitleStyle}" Text="Disk Cleanup Progress" />
+                        <ProgressBar Height="12"
+                                     Margin="0,12,0,0"
+                                     Maximum="5000"
+                                     Value="{Binding CleanableSpaceMB, Mode=OneWay}" />
+                        <TextBlock Margin="0,12,0,0"
+                                   Foreground="{DynamicResource MaterialDesignBodyLight}"
+                                   Text="{Binding DiskStatus}" />
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource PageCardStyle}">
+                    <StackPanel>
+                        <TextBlock Style="{StaticResource SectionTitleStyle}" Text="Cleanup Highlights" />
+                        <ItemsControl ItemsSource="{Binding CleanupHighlights}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="0,10,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="{Binding CategoryName}" />
+                                        <Border Grid.Column="1" Style="{StaticResource RiskBadgeBorderStyle}">
+                                            <TextBlock Style="{StaticResource RiskBadgeTextStyle}" Text="{Binding TotalSizeMB, StringFormat={}{0:N1} MB}" />
+                                        </Border>
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </Grid>
+    </Grid>
+</UserControl>

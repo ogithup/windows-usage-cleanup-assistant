@@ -1,0 +1,27 @@
+<UserControl x:Class="WindowsUsageCleanupAssistant.Views.SettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d">
+    <Grid>
+        <UniformGrid Columns="2">
+            <Border Style="{StaticResource PageCardStyle}" Margin="0,0,20,0">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource SectionTitleStyle}" Text="Application Settings" />
+                    <TextBlock Margin="0,12,0,0" Text="{Binding ThemeMode}" />
+                    <TextBlock Margin="0,8,0,0" Text="{Binding ExplanationProvider}" TextWrapping="Wrap" />
+                </StackPanel>
+            </Border>
+
+            <Border Style="{StaticResource PageCardStyle}">
+                <StackPanel>
+                    <TextBlock Style="{StaticResource SectionTitleStyle}" Text="Local Paths" />
+                    <TextBlock Margin="0,12,0,0" Text="{Binding DatabasePath}" TextWrapping="Wrap" />
+                    <TextBlock Margin="0,8,0,0" Text="{Binding CleanupLogPath}" TextWrapping="Wrap" />
+                    <TextBlock Margin="0,8,0,0" Text="{Binding ReportsDirectoryPath}" TextWrapping="Wrap" />
+                </StackPanel>
+            </Border>
+        </UniformGrid>
+    </Grid>
+</UserControl>

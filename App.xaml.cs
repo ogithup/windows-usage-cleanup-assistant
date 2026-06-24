@@ -22,6 +22,7 @@ public partial class App : Application
         _programUsageTracker = new ProgramUsageTrackerService(usageRepository);
         var programProcessMatcher = new ProgramProcessMatcherService();
         var cleanupRecommendationEngine = new CleanupRecommendationEngine();
+        var llmExplanationService = new MockLlmExplanationService();
         var cleanupLogService = new FileCleanupLogService(Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "WindowsUsageCleanupAssistant",
@@ -39,6 +40,7 @@ public partial class App : Application
             _programUsageTracker,
             programProcessMatcher,
             cleanupRecommendationEngine,
+            llmExplanationService,
             safeDiskCleanupService,
             cleanupLogService,
             reportGeneratorService);

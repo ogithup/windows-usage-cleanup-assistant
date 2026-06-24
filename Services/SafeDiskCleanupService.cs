@@ -1,6 +1,5 @@
 using System.IO;
 using System.Runtime.InteropServices;
-using Microsoft.VisualBasic.FileIO;
 using WindowsUsageCleanupAssistant.Models;
 
 namespace WindowsUsageCleanupAssistant.Services;
@@ -52,44 +51,55 @@ public sealed class SafeDiskCleanupService : ISafeDiskCleanupService
         return categories;
     }
 
-    public CleanupExecutionResult Clean(IReadOnlyList<CleanableCategory> categories)
+    public CleanupExecutionResult Clean(
+        IReadOnlyList<CleanableCategory> categories,
+        bool skipLockedFilesAutomatically,
+        IProgress<CleanupProgressUpdate>? progress = null)
     {
         var deletedEntries = 0;
+        var skippedEntries = 0;
         double reclaimedSizeMb = 0;
+        var cleanableCategories = categories.Where(category => category.CanClean).ToList();
+        var totalSteps = CalculateTotalSteps(cleanableCategories);
+        var processedSteps = 0;
 
-        foreach (var category in categories.Where(category => category.CanClean))
+        foreach (var category in cleanableCategories)
         {
             _cleanupLogService.Log($"Cleanup requested for category '{category.CategoryName}'.");
+            ReportProgress(progress, ++processedSteps, totalSteps, $"Scanning {category.CategoryName}", category.CategoryName, deletedEntries, skippedEntries);
 
             switch (category.CategoryKey)
             {
                 case "user-temp":
-                    deletedEntries += DeleteDirectoryContents(_userTempPath, moveToRecycleBin: true);
+                    deletedEntries += DeleteDirectoryContents(_userTempPath, moveToRecycleBin: true, skipLockedFilesAutomatically, ref skippedEntries, ref processedSteps, totalSteps, progress, category.CategoryName);
                     reclaimedSizeMb += category.TotalSizeMB;
                     break;
                 case "windows-temp":
-                    deletedEntries += DeleteDirectoryContents(_windowsTempPath, moveToRecycleBin: true);
+                    deletedEntries += DeleteDirectoryContents(_windowsTempPath, moveToRecycleBin: true, skipLockedFilesAutomatically, ref skippedEntries, ref processedSteps, totalSteps, progress, category.CategoryName);
                     reclaimedSizeMb += category.TotalSizeMB;
                     break;
                 case "recycle-bin":
                     EmptyRecycleBin();
+                    ReportProgress(progress, ++processedSteps, totalSteps, "Recycle Bin emptied", category.CategoryName, deletedEntries, skippedEntries);
                     reclaimedSizeMb += category.TotalSizeMB;
                     break;
                 case "thumbnail-cache":
-                    deletedEntries += DeleteThumbnailCacheFiles();
+                    deletedEntries += DeleteThumbnailCacheFiles(skipLockedFilesAutomatically, ref skippedEntries, ref processedSteps, totalSteps, progress, category.CategoryName);
                     reclaimedSizeMb += category.TotalSizeMB;
                     break;
             }
         }
 
-        var categoryCount = categories.Count(category => category.CanClean);
-        var summary = $"Processed {categoryCount} categories. Approx. {reclaimedSizeMb:N1} MB targeted.";
+        var categoryCount = cleanableCategories.Count;
+        var summary = $"Processed {categoryCount} categories. Approx. {reclaimedSizeMb:N1} MB targeted. Skipped {skippedEntries} locked/in-use entries.";
         _cleanupLogService.Log(summary);
+        ReportProgress(progress, totalSteps, totalSteps, "Cleanup complete", summary, deletedEntries, skippedEntries);
 
         return new CleanupExecutionResult
         {
             CategoryCount = categoryCount,
             DeletedEntries = deletedEntries,
+            SkippedEntries = skippedEntries,
             ReclaimedSizeMB = reclaimedSizeMb,
             Summary = summary,
         };
@@ -183,7 +193,15 @@ public sealed class SafeDiskCleanupService : ISafeDiskCleanupService
         return (fileCount, BytesToMb(totalBytes));
     }
 
-    private int DeleteDirectoryContents(string directoryPath, bool moveToRecycleBin)
+    private int DeleteDirectoryContents(
+        string directoryPath,
+        bool moveToRecycleBin,
+        bool skipLockedFilesAutomatically,
+        ref int skippedEntries,
+        ref int processedSteps,
+        int totalSteps,
+        IProgress<CleanupProgressUpdate>? progress,
+        string categoryName)
     {
         if (!Directory.Exists(directoryPath))
         {
@@ -201,16 +219,20 @@ public sealed class SafeDiskCleanupService : ISafeDiskCleanupService
 
             try
             {
-                FileSystem.DeleteFile(
-                    filePath,
-                    UIOption.OnlyErrorDialogs,
-                    moveToRecycleBin ? RecycleOption.SendToRecycleBin : RecycleOption.DeletePermanently);
+                DeletePathSilently(filePath, moveToRecycleBin);
                 deletedEntries++;
                 _cleanupLogService.Log($"Deleted file '{filePath}'.");
+                ReportProgress(progress, ++processedSteps, totalSteps, $"Deleted file in {categoryName}", Path.GetFileName(filePath), deletedEntries, skippedEntries);
             }
             catch (Exception ex)
             {
+                skippedEntries++;
                 _cleanupLogService.Log($"Failed to delete file '{filePath}': {ex.Message}");
+                ReportProgress(progress, ++processedSteps, totalSteps, $"Skipped locked file in {categoryName}", Path.GetFileName(filePath), deletedEntries, skippedEntries);
+                if (!skipLockedFilesAutomatically)
+                {
+                    throw new IOException($"Cleanup stopped on locked or inaccessible file: {filePath}", ex);
+                }
             }
         }
 
@@ -223,23 +245,33 @@ public sealed class SafeDiskCleanupService : ISafeDiskCleanupService
 
             try
             {
-                FileSystem.DeleteDirectory(
-                    subDirectory,
-                    UIOption.OnlyErrorDialogs,
-                    moveToRecycleBin ? RecycleOption.SendToRecycleBin : RecycleOption.DeletePermanently);
+                DeletePathSilently(subDirectory, moveToRecycleBin);
                 deletedEntries++;
                 _cleanupLogService.Log($"Deleted directory '{subDirectory}'.");
+                ReportProgress(progress, ++processedSteps, totalSteps, $"Deleted directory in {categoryName}", Path.GetFileName(subDirectory), deletedEntries, skippedEntries);
             }
             catch (Exception ex)
             {
+                skippedEntries++;
                 _cleanupLogService.Log($"Failed to delete directory '{subDirectory}': {ex.Message}");
+                ReportProgress(progress, ++processedSteps, totalSteps, $"Skipped locked directory in {categoryName}", Path.GetFileName(subDirectory), deletedEntries, skippedEntries);
+                if (!skipLockedFilesAutomatically)
+                {
+                    throw new IOException($"Cleanup stopped on locked or inaccessible directory: {subDirectory}", ex);
+                }
             }
         }
 
         return deletedEntries;
     }
 
-    private int DeleteThumbnailCacheFiles()
+    private int DeleteThumbnailCacheFiles(
+        bool skipLockedFilesAutomatically,
+        ref int skippedEntries,
+        ref int processedSteps,
+        int totalSteps,
+        IProgress<CleanupProgressUpdate>? progress,
+        string categoryName)
     {
         var deletedEntries = 0;
 
@@ -252,16 +284,20 @@ public sealed class SafeDiskCleanupService : ISafeDiskCleanupService
 
             try
             {
-                FileSystem.DeleteFile(
-                    fileInfo.FullName,
-                    UIOption.OnlyErrorDialogs,
-                    RecycleOption.SendToRecycleBin);
+                DeletePathSilently(fileInfo.FullName, moveToRecycleBin: true);
                 deletedEntries++;
                 _cleanupLogService.Log($"Deleted thumbnail cache file '{fileInfo.FullName}'.");
+                ReportProgress(progress, ++processedSteps, totalSteps, $"Deleted file in {categoryName}", fileInfo.Name, deletedEntries, skippedEntries);
             }
             catch (Exception ex)
             {
+                skippedEntries++;
                 _cleanupLogService.Log($"Failed to delete thumbnail cache file '{fileInfo.FullName}': {ex.Message}");
+                ReportProgress(progress, ++processedSteps, totalSteps, $"Skipped locked file in {categoryName}", fileInfo.Name, deletedEntries, skippedEntries);
+                if (!skipLockedFilesAutomatically)
+                {
+                    throw new IOException($"Cleanup stopped on locked or inaccessible thumbnail cache file: {fileInfo.FullName}", ex);
+                }
             }
         }
 
@@ -353,11 +389,65 @@ public sealed class SafeDiskCleanupService : ISafeDiskCleanupService
         return Math.Round(bytes / 1024d / 1024d, 1);
     }
 
+    private static int CalculateTotalSteps(IReadOnlyList<CleanableCategory> categories)
+    {
+        var total = 0;
+        foreach (var category in categories)
+        {
+            total += 1;
+            total += Math.Max(category.FileCount, 1);
+        }
+
+        return Math.Max(total, 1);
+    }
+
+    private static void ReportProgress(
+        IProgress<CleanupProgressUpdate>? progress,
+        int processedSteps,
+        int totalSteps,
+        string currentStep,
+        string currentItem,
+        int deletedEntries,
+        int skippedEntries)
+    {
+        progress?.Report(new CleanupProgressUpdate
+        {
+            ProcessedSteps = Math.Min(processedSteps, totalSteps),
+            TotalSteps = totalSteps,
+            CurrentStep = currentStep,
+            CurrentItem = currentItem,
+            DeletedEntries = deletedEntries,
+            SkippedEntries = skippedEntries,
+        });
+    }
+
+    private static void DeletePathSilently(string path, bool moveToRecycleBin)
+    {
+        var fileOperation = new SHFILEOPSTRUCT
+        {
+            wFunc = FileOperationType.Delete,
+            pFrom = path + "\0\0",
+            fFlags = FileOperationFlags.NoConfirmation |
+                     FileOperationFlags.NoErrorUi |
+                     FileOperationFlags.Silent |
+                     (moveToRecycleBin ? FileOperationFlags.AllowUndo : FileOperationFlags.None),
+        };
+
+        var result = SHFileOperation(ref fileOperation);
+        if (result != 0 || fileOperation.fAnyOperationsAborted)
+        {
+            throw new IOException($"Shell delete failed for '{path}' (code {result}).");
+        }
+    }
+
     [DllImport("Shell32.dll", CharSet = CharSet.Unicode)]
     private static extern int SHQueryRecycleBin(string? pszRootPath, ref SHQUERYRBINFO pSHQueryRBInfo);
 
     [DllImport("Shell32.dll", CharSet = CharSet.Unicode)]
     private static extern int SHEmptyRecycleBin(IntPtr hwnd, string? pszRootPath, int dwFlags);
+
+    [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
+    private static extern int SHFileOperation(ref SHFILEOPSTRUCT lpFileOp);
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
     private struct SHQUERYRBINFO
@@ -365,6 +455,34 @@ public sealed class SafeDiskCleanupService : ISafeDiskCleanupService
         public int cbSize;
         public long i64Size;
         public long i64NumItems;
+    }
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+    private struct SHFILEOPSTRUCT
+    {
+        public IntPtr hwnd;
+        public FileOperationType wFunc;
+        [MarshalAs(UnmanagedType.LPWStr)] public string pFrom;
+        [MarshalAs(UnmanagedType.LPWStr)] public string? pTo;
+        public FileOperationFlags fFlags;
+        [MarshalAs(UnmanagedType.Bool)] public bool fAnyOperationsAborted;
+        public IntPtr hNameMappings;
+        [MarshalAs(UnmanagedType.LPWStr)] public string? lpszProgressTitle;
+    }
+
+    private enum FileOperationType : uint
+    {
+        Delete = 3,
+    }
+
+    [Flags]
+    private enum FileOperationFlags : ushort
+    {
+        None = 0x0000,
+        Silent = 0x0004,
+        NoConfirmation = 0x0010,
+        AllowUndo = 0x0040,
+        NoErrorUi = 0x0400,
     }
 
     private sealed record RecycleBinInfo(long ItemCount, long SizeInBytes);

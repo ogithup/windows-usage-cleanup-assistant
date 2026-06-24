@@ -31,4 +31,6 @@ public sealed class ReportProgramItem
     public string Recommendation { get; init; } = string.Empty;
 
     public string RecommendationReasons { get; init; } = string.Empty;
+
+    public string LlmExplanation { get; init; } = string.Empty;
 }

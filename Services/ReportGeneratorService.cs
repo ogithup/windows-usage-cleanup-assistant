@@ -31,7 +31,7 @@ public sealed class ReportGeneratorService : IReportGeneratorService
         var filePath = Path.Combine(_reportsDirectoryPath, $"usage-cleanup-report-{timestamp}.csv");
 
         var builder = new StringBuilder();
-        builder.AppendLine("DisplayName,Publisher,Version,EstimatedSizeMB,LastUsedUtc,MatchedProcessName,MatchConfidence,UsageScore,SizeScore,SystemRiskScore,DependencyRiskScore,FinalCleanupScore,Recommendation,RecommendationReasons");
+        builder.AppendLine("DisplayName,Publisher,Version,EstimatedSizeMB,LastUsedUtc,MatchedProcessName,MatchConfidence,UsageScore,SizeScore,SystemRiskScore,DependencyRiskScore,FinalCleanupScore,Recommendation,RecommendationReasons,LlmExplanation");
 
         foreach (var program in snapshot.Programs.OrderBy(program => program.DisplayName, StringComparer.CurrentCultureIgnoreCase))
         {
@@ -49,7 +49,8 @@ public sealed class ReportGeneratorService : IReportGeneratorService
                 Csv(program.DependencyRiskScore.ToString(CultureInfo.InvariantCulture)),
                 Csv(program.FinalCleanupScore.ToString(CultureInfo.InvariantCulture)),
                 Csv(program.Recommendation),
-                Csv(program.RecommendationReasons)));
+                Csv(program.RecommendationReasons),
+                Csv(program.LlmExplanation)));
         }
 
         File.WriteAllText(filePath, builder.ToString(), Encoding.UTF8);
@@ -179,7 +180,7 @@ public sealed class ReportGeneratorService : IReportGeneratorService
         }
 
         var builder = new StringBuilder();
-        builder.AppendLine("<table><thead><tr><th>Name</th><th>Recommendation</th><th>Score</th><th>Last Used</th><th>Size MB</th><th>Process</th><th>Reasons</th></tr></thead><tbody>");
+        builder.AppendLine("<table><thead><tr><th>Name</th><th>Recommendation</th><th>Score</th><th>Last Used</th><th>Size MB</th><th>Process</th><th>Reasons</th><th>Turkish Explanation</th></tr></thead><tbody>");
 
         foreach (var program in rows)
         {
@@ -190,7 +191,8 @@ public sealed class ReportGeneratorService : IReportGeneratorService
                 $"<td>{Html(program.LastUsedUtc?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) ?? "No usage data")}</td>" +
                 $"<td>{Html(program.EstimatedSizeMB?.ToString("N0", CultureInfo.InvariantCulture) ?? "-")}</td>" +
                 $"<td>{Html(program.MatchedProcessName)}</td>" +
-                $"<td>{Html(program.RecommendationReasons)}</td></tr>");
+                $"<td>{Html(program.RecommendationReasons)}</td>" +
+                $"<td>{Html(program.LlmExplanation)}</td></tr>");
         }
 
         builder.AppendLine("</tbody></table>");

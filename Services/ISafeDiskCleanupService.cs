@@ -6,5 +6,8 @@ public interface ISafeDiskCleanupService
 {
     IReadOnlyList<CleanableCategory> Scan();
 
-    CleanupExecutionResult Clean(IReadOnlyList<CleanableCategory> categories);
+    CleanupExecutionResult Clean(
+        IReadOnlyList<CleanableCategory> categories,
+        bool skipLockedFilesAutomatically,
+        IProgress<CleanupProgressUpdate>? progress = null);
 }

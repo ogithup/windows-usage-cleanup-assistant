@@ -1,0 +1,9 @@
+bin/
+obj/
+.agents/
+.codex/
+*.user
+*.suo
+*.db
+*.log
+*-report.txt

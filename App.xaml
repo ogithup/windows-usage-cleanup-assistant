@@ -109,6 +109,41 @@
                 </Style.Triggers>
             </Style>
 
+            <Style x:Key="QuickActionCardStyle" TargetType="Button">
+                <Setter Property="Background" Value="#FFFDF8" />
+                <Setter Property="BorderBrush" Value="#E3DDD2" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="Padding" Value="20,16" />
+                <Setter Property="Margin" Value="0,0,16,0" />
+                <Setter Property="HorizontalContentAlignment" Value="Left" />
+                <Setter Property="VerticalContentAlignment" Value="Center" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Border x:Name="CardBorder"
+                                    Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="18"
+                                    Padding="{TemplateBinding Padding}">
+                                <ContentPresenter Content="{TemplateBinding Content}"
+                                                  ContentTemplate="{TemplateBinding ContentTemplate}"
+                                                  ContentStringFormat="{TemplateBinding ContentStringFormat}"
+                                                  HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                  VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="CardBorder" Property="Background" Value="#EAE6DC" />
+                                    <Setter TargetName="CardBorder" Property="BorderBrush" Value="#17494D" />
+                                    <Setter Property="Cursor" Value="Hand" />
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
             <DataTemplate DataType="{x:Type viewmodels:DashboardViewModel}">
                 <views:DashboardView />
             </DataTemplate>

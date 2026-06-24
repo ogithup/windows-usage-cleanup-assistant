@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
@@ -11,6 +11,13 @@
   <ItemGroup>
     <PackageReference Include="MaterialDesignThemes" Version="5.2.1" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.9" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="WindowsUsageCleanupAssistant.Tests\**" />
+    <EmbeddedResource Remove="WindowsUsageCleanupAssistant.Tests\**" />
+    <None Remove="WindowsUsageCleanupAssistant.Tests\**" />
+    <Page Remove="WindowsUsageCleanupAssistant.Tests\**" />
   </ItemGroup>
 
 </Project>

@@ -8,11 +8,10 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
+        <!-- Top action bar -->
         <DockPanel Margin="0,0,0,16">
             <Button DockPanel.Dock="Right"
                     Width="130"
@@ -23,61 +22,164 @@
                     Width="110"
                     Command="{Binding DataContext.RefreshCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                     Content="Refresh" />
-            <TextBox Margin="0,0,12,0"
-                     materialDesign:HintAssist.Hint="Search apps, publishers, process names, explanations"
-                     Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" />
+            <TextBlock Style="{StaticResource SectionTitleStyle}" Text="Installed Applications Inventory" VerticalAlignment="Center" />
         </DockPanel>
 
-        <WrapPanel Grid.Row="1" Margin="0,0,0,16">
-            <ToggleButton Style="{StaticResource FilterChipToggleStyle}" IsChecked="{Binding ShowLargePrograms}" Content="Large Programs" />
-            <ToggleButton Style="{StaticResource FilterChipToggleStyle}" IsChecked="{Binding ShowUnusedPrograms}" Content="Unused 6+ Months" />
-            <ToggleButton Style="{StaticResource FilterChipToggleStyle}" IsChecked="{Binding ShowSdkRuntime}" Content="SDK / Runtime" />
-            <ToggleButton Style="{StaticResource FilterChipToggleStyle}" IsChecked="{Binding ShowGames}" Content="Games" />
-            <ToggleButton Style="{StaticResource FilterChipToggleStyle}" IsChecked="{Binding ShowDevelopmentTools}" Content="Development Tools" />
-            <ToggleButton Style="{StaticResource FilterChipToggleStyle}" IsChecked="{Binding ShowSystemComponents}" Content="System Components" />
-        </WrapPanel>
+        <!-- Split Grid: Filter panel on Left, Data Grid on Right -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="280" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
 
-        <DataGrid Grid.Row="2"
-                  AutoGenerateColumns="False"
-                  CanUserAddRows="False"
-                  CanUserDeleteRows="False"
-                  IsReadOnly="True"
-                  ItemsSource="{Binding ProgramsView}"
-                  SelectedItem="{Binding SelectedProgram, Mode=TwoWay}"
-                  RowHeaderWidth="0"
-                  GridLinesVisibility="Horizontal"
-                  HeadersVisibility="Column">
-            <DataGrid.Columns>
-                <DataGridTextColumn Width="1.4*" Binding="{Binding DisplayName}" Header="App" />
-                <DataGridTextColumn Width="0.9*" Binding="{Binding CategoryLabel}" Header="Category" />
-                <DataGridTemplateColumn Width="0.9*" Header="Recommendation">
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                            <Border Style="{StaticResource RecommendationBadgeBorderStyle}">
-                                <TextBlock Style="{StaticResource RecommendationBadgeTextStyle}" Text="{Binding Recommendation}" />
-                            </Border>
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
-                <DataGridTemplateColumn Width="0.9*" Header="Risk">
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                            <Border Style="{StaticResource RiskBadgeBorderStyle}">
-                                <TextBlock Style="{StaticResource RiskBadgeTextStyle}" Text="{Binding SystemRiskScore}" />
-                            </Border>
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
-                <DataGridTextColumn Width="0.8*" Binding="{Binding EstimatedSizeMB}" Header="MB" />
-                <DataGridTextColumn Width="1*" Binding="{Binding LastUsedUtc, StringFormat={}{0:yyyy-MM-dd}}" Header="Last Used" />
-                <DataGridTextColumn Width="1.1*" Binding="{Binding MatchedProcessName}" Header="Process" />
-                <DataGridTextColumn Width="2.6*" Binding="{Binding LlmExplanation}" Header="Turkish Explanation" />
-            </DataGrid.Columns>
-        </DataGrid>
+            <!-- Left Filter & Sort Panel -->
+            <Border Grid.Column="0" Style="{StaticResource PageCardStyle}" Margin="0,0,16,0" VerticalAlignment="Stretch">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel>
+                        <!-- Section: Search -->
+                        <TextBlock FontWeight="Bold" FontSize="14" Foreground="#17494D" Text="Search" Margin="0,0,0,8" />
+                        <TextBox materialDesign:HintAssist.Hint="Search programs..."
+                                 Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" 
+                                 Margin="0,0,0,16" />
 
-        <TextBlock Grid.Row="3"
-                   Margin="0,12,0,0"
-                   Foreground="{DynamicResource MaterialDesignBodyLight}"
-                   Text="{Binding StatusText}" />
+                        <!-- Section: Sort By -->
+                        <TextBlock FontWeight="Bold" FontSize="14" Foreground="#17494D" Text="Sort By" Margin="0,0,0,8" />
+                        <ComboBox SelectedValuePath="Tag" SelectedValue="{Binding SelectedSortOption}" Margin="0,0,0,16">
+                            <ComboBoxItem Content="Name (A-Z)" Tag="Name" />
+                            <ComboBoxItem Content="Size (Largest First)" Tag="Size" />
+                            <ComboBoxItem Content="Last Used (Recent First)" Tag="LastUsed" />
+                            <ComboBoxItem Content="Launch Count (Most Launches)" Tag="LaunchCount" />
+                            <ComboBoxItem Content="Cleanup Score (Highest)" Tag="Score" />
+                        </ComboBox>
+
+                        <!-- Section: Size Filter -->
+                        <TextBlock FontWeight="Bold" FontSize="14" Foreground="#17494D" Text="Size Filter" Margin="0,0,0,8" />
+                        <ComboBox SelectedValuePath="Tag" SelectedValue="{Binding SelectedSizeFilter}" Margin="0,0,0,16">
+                            <ComboBoxItem Content="Any Size" Tag="Any" />
+                            <ComboBoxItem Content="> 500 MB" Tag=">500MB" />
+                            <ComboBoxItem Content="> 1 GB" Tag=">1GB" />
+                            <ComboBoxItem Content="> 5 GB" Tag=">5GB" />
+                        </ComboBox>
+
+                        <!-- Section: Last Used Filter -->
+                        <TextBlock FontWeight="Bold" FontSize="14" Foreground="#17494D" Text="Last Used Filter" Margin="0,0,0,8" />
+                        <ComboBox SelectedValuePath="Tag" SelectedValue="{Binding SelectedLastUsedFilter}" Margin="0,0,0,16">
+                            <ComboBoxItem Content="Any Time" Tag="Any" />
+                            <ComboBoxItem Content="No Usage Data" Tag="NoData" />
+                            <ComboBoxItem Content="30+ Days Unused" Tag="30Days" />
+                            <ComboBoxItem Content="180+ Days Unused" Tag="180Days" />
+                            <ComboBoxItem Content="365+ Days Unused" Tag="365Days" />
+                        </ComboBox>
+
+                        <!-- Section: Category Filters -->
+                        <TextBlock FontWeight="Bold" FontSize="14" Foreground="#17494D" Text="Category" Margin="0,0,0,8" />
+                        <CheckBox Content="SDK / Runtime" IsChecked="{Binding ShowSdkRuntime}" Margin="0,0,0,6" />
+                        <CheckBox Content="Development Tool" IsChecked="{Binding ShowDevelopmentTools}" Margin="0,0,0,6" />
+                        <CheckBox Content="Game" IsChecked="{Binding ShowGames}" Margin="0,0,0,6" />
+                        <CheckBox Content="Application" IsChecked="{Binding ShowCategoryApplications}" Margin="0,0,0,6" />
+                        <CheckBox Content="System Component" IsChecked="{Binding ShowSystemComponents}" Margin="0,0,0,16" />
+
+                        <!-- Section: Recommendation Filters -->
+                        <TextBlock FontWeight="Bold" FontSize="14" Foreground="#17494D" Text="Recommendation" Margin="0,0,0,8" />
+                        <CheckBox Content="Keep" IsChecked="{Binding ShowRecKeep}" Margin="0,0,0,6" />
+                        <CheckBox Content="Review" IsChecked="{Binding ShowRecReview}" Margin="0,0,0,6" />
+                        <CheckBox Content="CleanupCandidate" IsChecked="{Binding ShowRecCleanupCandidate}" Margin="0,0,0,6" />
+                        <CheckBox Content="DoNotRemove" IsChecked="{Binding ShowRecDoNotRemove}" Margin="0,0,0,16" />
+
+                        <!-- Section: Match Confidence Filters -->
+                        <TextBlock FontWeight="Bold" FontSize="14" Foreground="#17494D" Text="Match Confidence" Margin="0,0,0,8" />
+                        <CheckBox Content="High" IsChecked="{Binding ShowConfHigh}" Margin="0,0,0,6" />
+                        <CheckBox Content="Medium" IsChecked="{Binding ShowConfMedium}" Margin="0,0,0,6" />
+                        <CheckBox Content="Low" IsChecked="{Binding ShowConfLow}" Margin="0,0,0,6" />
+                        <CheckBox Content="Unmatched" IsChecked="{Binding ShowConfUnmatched}" Margin="0,0,0,16" />
+
+                        <!-- Action: Reset Filters -->
+                        <Button Content="Clear All Filters" Style="{StaticResource MaterialDesignOutlinedButton}" Command="{Binding ResetFiltersCommand}" Margin="0,8,0,0" />
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+
+            <!-- Right Column: Active Chips + DataGrid -->
+            <Grid Grid.Column="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <!-- Active Chips Panel -->
+                <WrapPanel Grid.Row="0" Margin="0,0,0,12" VerticalAlignment="Center">
+                    <TextBlock Text="Active Filters: " FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,8,0">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ActiveFilters.Count}" Value="0">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                    <ItemsControl ItemsSource="{Binding ActiveFilters}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Background="#E6ECEF" CornerRadius="12" Padding="8,4" Margin="0,0,8,4" BorderBrush="#C8D7D9" BorderThickness="1">
+                                    <TextBlock Text="{Binding}" FontSize="11" Foreground="#17494D" FontWeight="SemiBold"/>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </WrapPanel>
+
+                <!-- DataGrid -->
+                <DataGrid Grid.Row="1"
+                          AutoGenerateColumns="False"
+                          CanUserAddRows="False"
+                          CanUserDeleteRows="False"
+                          IsReadOnly="True"
+                          ItemsSource="{Binding ProgramsView}"
+                          SelectedItem="{Binding SelectedProgram, Mode=TwoWay}"
+                          RowHeaderWidth="0"
+                          GridLinesVisibility="Horizontal"
+                          HeadersVisibility="Column">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Width="1.4*" Binding="{Binding DisplayName}" Header="App" />
+                        <DataGridTextColumn Width="0.9*" Binding="{Binding CategoryLabel}" Header="Category" />
+                        <DataGridTemplateColumn Width="0.9*" Header="Recommendation">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Border Style="{StaticResource RecommendationBadgeBorderStyle}">
+                                        <TextBlock Style="{StaticResource RecommendationBadgeTextStyle}" Text="{Binding Recommendation}" />
+                                    </Border>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTemplateColumn Width="0.9*" Header="Risk">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Border Style="{StaticResource RiskBadgeBorderStyle}">
+                                        <TextBlock Style="{StaticResource RiskBadgeTextStyle}" Text="{Binding SystemRiskScore}" />
+                                    </Border>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTextColumn Width="0.8*" Binding="{Binding EstimatedSizeMB}" Header="MB" />
+                        <DataGridTextColumn Width="1*" Binding="{Binding LastUsedUtc, StringFormat={}{0:yyyy-MM-dd}}" Header="Last Used" />
+                        <DataGridTextColumn Width="1.1*" Binding="{Binding MatchedProcessName}" Header="Process" />
+                        <DataGridTextColumn Width="2.6*" Binding="{Binding LlmExplanation}" Header="Turkish Explanation" />
+                    </DataGrid.Columns>
+                </DataGrid>
+
+                <TextBlock Grid.Row="2"
+                           Margin="0,12,0,0"
+                           Foreground="{DynamicResource MaterialDesignBodyLight}"
+                           Text="{Binding StatusText}" />
+            </Grid>
+        </Grid>
     </Grid>
 </UserControl>

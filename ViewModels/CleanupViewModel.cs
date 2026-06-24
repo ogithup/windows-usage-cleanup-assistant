@@ -43,7 +43,6 @@ public sealed class CleanupViewModel : ViewModelBase
 
     public void Refresh()
     {
-        OnPropertyChanged(nameof(Categories));
         OnPropertyChanged(nameof(StatusText));
         OnPropertyChanged(nameof(SelectedSpaceMB));
         OnPropertyChanged(nameof(SkippedSummaryText));

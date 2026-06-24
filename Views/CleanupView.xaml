@@ -54,14 +54,23 @@
                   AutoGenerateColumns="False"
                   CanUserAddRows="False"
                   CanUserDeleteRows="False"
+                  IsReadOnly="True"
                   ItemsSource="{Binding Categories}"
                   RowHeaderWidth="0">
             <DataGrid.Columns>
-                <DataGridCheckBoxColumn Width="0.7*" Binding="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}" Header="Select" />
-                <DataGridTextColumn Width="1.2*" Binding="{Binding CategoryName}" Header="Category" />
-                <DataGridTextColumn Width="0.8*" Binding="{Binding FileCount}" Header="Files" />
-                <DataGridTextColumn Width="0.9*" Binding="{Binding TotalSizeMB, StringFormat={}{0:N1}}" Header="Size (MB)" />
-                <DataGridTemplateColumn Width="0.8*" Header="Risk">
+                <DataGridTemplateColumn Width="0.7*" Header="Select">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <CheckBox IsChecked="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Center" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTextColumn Width="1.2*" Binding="{Binding CategoryName}" Header="Category" IsReadOnly="True" />
+                <DataGridTextColumn Width="0.8*" Binding="{Binding FileCount}" Header="Files" IsReadOnly="True" />
+                <DataGridTextColumn Width="0.9*" Binding="{Binding TotalSizeMB, StringFormat={}{0:N1}}" Header="Size (MB)" IsReadOnly="True" />
+                <DataGridTemplateColumn Width="0.8*" Header="Risk" IsReadOnly="True">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <Border Style="{StaticResource RiskBadgeBorderStyle}">
@@ -70,7 +79,7 @@
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
-                <DataGridTextColumn Width="2.4*" Binding="{Binding Description}" Header="Description" />
+                <DataGridTextColumn Width="2.4*" Binding="{Binding Description}" Header="Description" IsReadOnly="True" />
             </DataGrid.Columns>
         </DataGrid>
 
